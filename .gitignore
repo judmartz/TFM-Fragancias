@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # === 🔧 Entornos y compilados ===
 .venv/
 __pycache__/
@@ -32,3 +33,28 @@ kaggle.json
 .vscode/
 *.Zone.Identifier
 *:Zone.Identifier
+
+# Ignorar la carpeta data (datos de Kaggle y Delta)
+data/
+
+# Ignorar archivos temporales o binarios
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+
+# Entornos virtuales
+.venv/
+venv/
+ENV/
+
+# Archivos de sistema / editores
+.DS_Store
+Thumbs.db
+.vscode/
+
+# Archivos de salida
+*.log
+*.out
+*.parquet
+*.delta
