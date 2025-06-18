@@ -1,61 +1,29 @@
-<<<<<<< HEAD
-# === 🔧 Entornos y compilados ===
-.venv/
-__pycache__/
-*.py[cod]
-*.ipynb_checkpoints/
+# === IGNORAR DATOS Y ARCHIVOS GRANDES ===
+data/*
+!data/.gitkeep  # Conserva la estructura de carpetas
 
-# === �� Archivos de datos ===
-data/
-*.csv
-*.json
-*.parquet
-*.delta
-*.crc
-*.zip
-*.gz
-
-# === 🔍 Delta Lake logs ===
-**/_delta_log/
-*/_delta_log/
-_delta_log/
-
-# === 🔒 Claves privadas y configuración ===
-kaggle.json
-*.key
-*.pem
-*.env
-.env
-
-# === ⚙️ Archivos de sistema o VSCode ===
-*.log
-*.DS_Store
-.vscode/
-*.Zone.Identifier
-*:Zone.Identifier
-
-# Ignorar la carpeta data (datos de Kaggle y Delta)
-data/
-
-# Ignorar archivos temporales o binarios
+# === IGNORAR ARCHIVOS DE PYTHON ===
 __pycache__/
 *.py[cod]
 *.pyo
 *.pyd
 
-# Entornos virtuales
-.venv/
+# === ENTORNOS VIRTUALES ===
 venv/
-ENV/
+.venv/
 
-# Archivos de sistema / editores
+# === NOTEBOOKS Y CHECKPOINTS ===
+.ipynb_checkpoints/
+
+# === LOGS Y ARCHIVOS TEMPORALES ===
+*.log
+*.tmp
+*.bak
+*.swp
+
+# === SISTEMAS DE ARCHIVOS OCULTOS ===
 .DS_Store
 Thumbs.db
-.vscode/
 
-# Archivos de salida
-*.log
-*.out
-*.parquet
-*.delta
-*.csv
+# === CONFIGURACIONES DE EDITOR ===
+.vscode/
