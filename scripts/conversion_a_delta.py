@@ -4,9 +4,12 @@ from delta import configure_spark_with_delta_pip
 
 # 🚀 Inicializa Spark con soporte para Delta Lake
 builder = SparkSession.builder \
-    .appName("Conversión CSV a Delta") \
+    .appName("Trusted Zone Cleaning") \
     .config("spark.sql.extensions", "io.delta.sql.DeltaSparkSessionExtension") \
-    .config("spark.sql.catalog.spark_catalog", "org.apache.spark.sql.delta.catalog.DeltaCatalog")
+    .config("spark.sql.catalog.spark_catalog", "org.apache.spark.sql.delta.catalog.DeltaCatalog") \
+    .config("spark.master", "local[*]") \
+    .config("spark.sql.warehouse.dir", "file:///tmp/spark-warehouse") \
+    .config("spark.hadoop.fs.defaultFS", "file:///")
 
 spark = configure_spark_with_delta_pip(builder).getOrCreate()
 
@@ -36,7 +39,14 @@ for nombre, rutas in datasets.items():
         if archivo.endswith(".csv"):
             ruta_csv = os.path.join(input_folder, archivo)
             nombre_base = os.path.splitext(archivo)[0]
-            ruta_delta = os.path.join(output_base, nombre_base)
+
+            # 🧼 Reemplazar guiones por guiones bajos
+            nombre_base_sanitizado = nombre_base.replace("-", "_")
+
+            ruta_delta = os.path.join(output_base, nombre_base_sanitizado)
+
+            # 🛠️ Crear carpeta si no existe
+            os.makedirs(ruta_delta, exist_ok=True)
 
             print(f"🔄 Convirtiendo: {archivo} → Delta")
 

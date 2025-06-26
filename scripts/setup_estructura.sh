@@ -13,6 +13,7 @@ mkdir -p data/trusted/productos_unificados
 mkdir -p data/exploitation/modelos_input
 mkdir -p data/exploitation/analisis_final
 mkdir -p data/exploitation/dashboards_data
+mkdir -p data/exploitation/products
 
 # Crear carpetas adicionales del proyecto
 mkdir -p scripts
