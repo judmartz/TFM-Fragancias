@@ -15,13 +15,15 @@ builder = SparkSession.builder \
     .appName("Skincare Reviews Analytics") \
     .master("local[*]") \
     .config("spark.sql.extensions", "io.delta.sql.DeltaSparkSessionExtension") \
-    .config("spark.sql.catalog.spark_catalog", "org.apache.spark.sql.delta.catalog.DeltaCatalog")
-
+    .config("spark.sql.catalog.spark_catalog", "org.apache.spark.sql.delta.catalog.DeltaCatalog")\
+    .config("spark.driver.memory", "4g") \
+    .config("spark.executor.memory", "4g") \
+    
 spark = configure_spark_with_delta_pip(builder).getOrCreate()
 
 # Cargar dataset Delta limpio
 
-ruta = os.path.expanduser("~/MASTER_BIGDATA/TFM/TFM-Fragancias/data/exploitation/products/skincare_reviews")
+ruta = "data/exploitation/products/skincare_reviews"
 df = spark.read.format("delta").load(ruta)
 df_pd = df.toPandas()
 

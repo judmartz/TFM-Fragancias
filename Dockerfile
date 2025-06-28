@@ -11,7 +11,7 @@ RUN apt-get update && \
     grep -v "rpy2" requirements.txt > /app/temp_requirements.txt && \
     pip install -r /app/temp_requirements.txt
 
-CMD [ "start-notebook.sh", "--ip=0.0.0.0", "--allow-root", "--no-browser" ]
+CMD [ "bash" ]
 
 # Luego construye la imagen:
 # docker build -t tfm-fragancias .

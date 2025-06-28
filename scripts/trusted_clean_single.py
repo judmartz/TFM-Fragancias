@@ -22,7 +22,9 @@ builder = SparkSession.builder \
     .config("spark.sql.extensions", "io.delta.sql.DeltaSparkSessionExtension") \
     .config("spark.sql.catalog.spark_catalog", "org.apache.spark.sql.delta.catalog.DeltaCatalog") \
     .config("spark.sql.warehouse.dir", "file:///tmp/spark-warehouse") \
-    .config("spark.hadoop.fs.defaultFS", "file:///")
+    .config("spark.hadoop.fs.defaultFS", "file:///")\
+    .config("spark.driver.memory", "4g") \
+    .config("spark.executor.memory", "4g") \
 
 spark = configure_spark_with_delta_pip(builder).getOrCreate()
 
