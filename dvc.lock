@@ -1,0 +1,20 @@
+schema: '2.0'
+stages:
+  clean_data:
+    cmd: python scripts/trusted_clean_driver.py
+    deps:
+    - path: data/raw
+      hash: md5
+      md5: d751713988987e9331980363e24189ce.dir
+      size: 0
+      nfiles: 0
+    - path: scripts/trusted_clean_driver.py
+      hash: md5
+      md5: 20eb4ce3521a4aabf2d90364be35dd17
+      size: 861
+    outs:
+    - path: data/trusted
+      hash: md5
+      md5: b9663daa235e6887726f00e9770aefeb.dir
+      size: 249729377
+      nfiles: 296

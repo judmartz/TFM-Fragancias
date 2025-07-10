@@ -1,0 +1,8 @@
+stages:
+  clean_data:
+    cmd: python scripts/trusted_clean_driver.py
+    deps:
+    - data/raw
+    - scripts/trusted_clean_driver.py
+    outs:
+    - data/trusted
