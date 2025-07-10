@@ -5,9 +5,9 @@ stages:
     deps:
     - path: data/raw
       hash: md5
-      md5: d751713988987e9331980363e24189ce.dir
-      size: 0
-      nfiles: 0
+      md5: fcb1a119a8a28cb3f3d856c9a0a489d2.dir
+      size: 5
+      nfiles: 1
     - path: scripts/trusted_clean_driver.py
       hash: md5
       md5: 20eb4ce3521a4aabf2d90364be35dd17
@@ -15,6 +15,6 @@ stages:
     outs:
     - path: data/trusted
       hash: md5
-      md5: b9663daa235e6887726f00e9770aefeb.dir
+      md5: 63a7425dd7c2f8f1121fb53ca4089a05.dir
       size: 249729377
       nfiles: 296
