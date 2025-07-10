@@ -29,3 +29,4 @@ Thumbs.db
 
 # === CONFIGURACIONES DE EDITOR ===
 .vscode/
+/models

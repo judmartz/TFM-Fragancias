@@ -6,3 +6,10 @@ stages:
     - scripts/trusted_clean_driver.py
     outs:
     - data/trusted
+  train_model_with_mlflow:
+    cmd: python scripts/train_model_with_mlflow.py
+    deps:
+    - data/trusted
+    - scripts/train_model_with_mlflow.py
+    outs:
+    - models

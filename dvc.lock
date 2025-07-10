@@ -18,3 +18,21 @@ stages:
       md5: 63a7425dd7c2f8f1121fb53ca4089a05.dir
       size: 249729377
       nfiles: 296
+  train_model_with_mlflow:
+    cmd: python scripts/train_model_with_mlflow.py
+    deps:
+    - path: data/trusted
+      hash: md5
+      md5: 63a7425dd7c2f8f1121fb53ca4089a05.dir
+      size: 249729377
+      nfiles: 296
+    - path: scripts/train_model_with_mlflow.py
+      hash: md5
+      md5: 2377ccdc93befe8a3bf2597b18625e25
+      size: 1100
+    outs:
+    - path: models
+      hash: md5
+      md5: b481bec18855c87c89aa528f9da42cc1.dir
+      size: 123153
+      nfiles: 1
