@@ -1,7 +1,9 @@
 # === IGNORAR DATOS Y ARCHIVOS GRANDES ===
-data/*
 !data/.gitkeep  # Conserva la estructura de carpetas
-
+data/*
+!data/raw.dvc
+!data/raw/.gitignore
+!data/.gitkeep
 # === IGNORAR ARCHIVOS DE PYTHON ===
 __pycache__/
 *.py[cod]
@@ -27,3 +29,4 @@ Thumbs.db
 
 # === CONFIGURACIONES DE EDITOR ===
 .vscode/
+/models
