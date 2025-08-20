@@ -1,0 +1,5 @@
+outs:
+- md5: ba1e709b0951ae92f3cc96a6d4c85ec2
+  size: 195393306
+  hash: md5
+  path: skincare.csv
