@@ -15,7 +15,7 @@ else:
 # Helper para ejecutar scripts python con ruta absoluta
 def run_python(script_name):
     script_path = os.path.join(project_root, "scripts", script_name)
-    subprocess.run(["python", script_path])
+    subprocess.run(["python3", script_path])
 
 # 1️⃣ Descarga datasets de Kaggle
 run_python("descarga_kaggle_reviews.py")

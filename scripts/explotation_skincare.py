@@ -17,7 +17,7 @@ builder = SparkSession.builder \
 spark = configure_spark_with_delta_pip(builder).getOrCreate()
 
 # 📥 Leer datos trusted
-ruta_reviews = "data/trusted/sephora_clean/reviews_0-250" #typo _ per -
+ruta_reviews = "data/trusted/sephora_clean/reviews_0_250" #typo _ per -
 ruta_productos = "data/trusted/sephora_clean/product_info"
 
 df_reviews = spark.read.format("delta").load(ruta_reviews)

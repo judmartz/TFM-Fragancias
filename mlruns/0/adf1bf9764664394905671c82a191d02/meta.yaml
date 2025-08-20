@@ -1,0 +1,14 @@
+artifact_uri: file:///home/judmartz/MASTER_BIGDATA/TFM/TFM-Fragancias/mlruns/0/adf1bf9764664394905671c82a191d02/artifacts
+end_time: 1755701768151
+entry_point_name: ''
+experiment_id: '0'
+lifecycle_stage: active
+run_id: adf1bf9764664394905671c82a191d02
+run_name: righteous-eel-127
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1755701767690
+status: 3
+tags: []
+user_id: judmartz
