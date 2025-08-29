@@ -1,0 +1,120 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+import re, json, time, math, requests, pandas as pd
+from playwright.sync_api import sync_playwright
+
+PDP = "https://www.sephora.my/products/sephora-collection-original-new-cream-lip-stain/v/13-marvelous-mauve"
+PRODUCT_ID = "default-100151-258071"  # lo viste en tu log
+LOCALE = "en_MY"
+
+CONFIG_HINTS = ("api-config.js", "swat_reviews-config.js", "rating_summary-config.js")
+PASSKEY_RE = re.compile(r'(?i)(?:passkey|apiKey|apikey)\s*[:=]\s*["\']([A-Za-z0-9\-]+)["\']')
+
+def download_all_reviews(passkey: str, product_id: str, locale: str = LOCALE, limit: int = 100) -> pd.DataFrame:
+    BASE = "https://api.bazaarvoice.com/data/reviews.json"
+    HEADERS = {"User-Agent": "Mozilla/5.0", "Accept-Language": "en-US,en;q=0.9", "Referer": "https://www.sephora.my/"}
+    def call(offset: int):
+        params = {
+            "passkey": passkey,
+            "Filter": f"ProductId:eq:{product_id}",
+            "Include": "Products,Comments",
+            "Stats": "Reviews",
+            "Sort": "SubmissionTime:desc",
+            "Limit": limit,
+            "Offset": offset,
+            "Locale": locale
+        }
+        r = requests.get(BASE, params=params, headers=HEADERS, timeout=30)
+        r.raise_for_status()
+        return r.json()
+
+    first = call(0)
+    total = first.get("TotalResults", len(first.get("Results", [])))
+    pages = math.ceil(total/limit)
+    rows = first.get("Results", [])[:]
+    for i in range(1, pages):
+        time.sleep(0.5)
+        rows += call(i*limit).get("Results", [])
+    df = pd.DataFrame([{
+        "review_id": rv.get("Id"),
+        "rating": rv.get("Rating"),
+        "title": rv.get("Title"),
+        "text": rv.get("ReviewText"),
+        "submission_time": rv.get("SubmissionTime"),
+        "nickname": rv.get("UserNickname"),
+        "helpful_yes": rv.get("TotalPositiveFeedbackCount"),
+        "helpful_no": rv.get("TotalNegativeFeedbackCount"),
+        "context": rv.get("ContextDataValues"),
+    } for rv in rows])
+    print(f"Total reviews: {total} | rows: {len(df)}")
+    return df
+
+def main():
+    passkey_found = None
+
+    with sync_playwright() as p:
+        # usa WebKit primero (te funcionó), y si quieres añade fallback a chromium/firefox
+        browser = p.webkit.launch(headless=True)
+        ctx = browser.new_context(
+            user_agent=("Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+                        "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"),
+            ignore_https_errors=True,
+            locale=LOCALE,
+            extra_http_headers={"Referer": "https://www.sephora.my/", "Accept-Language": "en-US,en;q=0.9"},
+        )
+        page = ctx.new_page()
+
+        # Captura respuestas; si son configs de BV, lee el body y busca passkey/apikey
+        def on_response(resp):
+            nonlocal passkey_found
+            url = resp.url
+            low = url.lower()
+            if any(h in low for h in CONFIG_HINTS):
+                try:
+                    txt = resp.text()
+                    m = PASSKEY_RE.search(txt)
+                    if m and not passkey_found:
+                        passkey_found = m.group(1)
+                        print(">>> PASSKEY capturada desde", url, ":", passkey_found)
+                except Exception:
+                    pass
+            if "data/reviews.json" in low:
+                print(">>> Llamada directa a data/reviews.json:", url)
+
+        page.on("response", on_response)
+
+        # Navega evitando 'networkidle'
+        try:
+            page.goto(PDP, wait_until="domcontentloaded", timeout=120_000)
+        except Exception:
+            page.goto(PDP, wait_until="load", timeout=120_000)
+
+        # Scrolls para cargar módulos
+        for _ in range(6):
+            page.evaluate("window.scrollBy(0, document.body.scrollHeight/6)")
+            page.wait_for_timeout(1200)
+
+        # Intenta abrir la sección de reviews para forzar las XHR
+        for sel in ["text=Reviews", "text=Ratings & Reviews", "text=Customer Reviews",
+                    "text=Opiniones", "text=Valoraciones", "text=Reseñas"]:
+            try:
+                page.locator(sel).first.click(timeout=1500)
+                page.wait_for_timeout(2000)
+                break
+            except Exception:
+                pass
+
+        # Espera un poco a que lleguen las configs
+        page.wait_for_timeout(4000)
+        browser.close()
+
+    if not passkey_found:
+        raise SystemExit("❌ No pude capturar la passkey leyendo las configs. Abre DevTools/Network y copia 'passkey' de api-config.js.")
+
+    # Con la passkey + productId ya descargamos TODO con requests (sin headless)
+    df = download_all_reviews(passkey_found, PRODUCT_ID, LOCALE, limit=100)
+    df.to_csv("reviews_sephora_my_lip_stain.csv", index=False)
+    print("✅ Guardado: reviews_sephora_my_lip_stain.csv")
+
+if __name__ == "__main__":
+    main()

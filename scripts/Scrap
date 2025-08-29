@@ -1,0 +1,97 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+from playwright.sync_api import sync_playwright
+import time
+
+PDP = "https://www.sephora.my/products/sephora-collection-original-new-cream-lip-stain/v/13-marvelous-mauve"
+OUT_TXT = "xhr_reviews_urls.txt"
+SCREENSHOT = "pdp.png"
+
+KEYWORDS = ("bazaarvoice", "reviews.json", "/reviews", "review?", "ugc")
+
+BROWSER_CHAIN = (
+    ("webkit",  dict(headless=True, args=[])),  # 1º intento
+    ("chromium",dict(headless=True, args=["--disable-http2","--no-sandbox","--disable-features=NetworkService,AutomationControlled"])),
+    ("firefox", dict(headless=True, args=[])),
+)
+
+def sniff_xhr(pdp_url: str):
+    for engine, launch_kwargs in BROWSER_CHAIN:
+        print(f"\n=== Intentando con {engine} ===")
+        try:
+            with open(OUT_TXT, "w", encoding="utf-8") as fh, sync_playwright() as p:
+                # lanzar el motor solicitado
+                bt = getattr(p, engine)
+                browser = bt.launch(**launch_kwargs)
+                ctx = browser.new_context(
+                    user_agent=("Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+                                "AppleWebKit/537.36 (KHTML, like Gecko) "
+                                "Chrome/124.0.0.0 Safari/537.36"),
+                    ignore_https_errors=True,
+                    locale="en-MY",
+                    extra_http_headers={
+                        "Referer": "https://www.sephora.my/",
+                        "Accept-Language": "en-US,en;q=0.9",
+                    },
+                )
+                page = ctx.new_page()
+
+                # tiempo de navegación más largo
+                page.set_default_navigation_timeout(180_000)
+
+                # registrar XHR de interés
+                seen = set()
+                def on_request(req):
+                    u = req.url.lower()
+                    if any(k in u for k in KEYWORDS):
+                        if req.url not in seen:
+                            seen.add(req.url)
+                            print("XHR:", req.url)
+                            fh.write(req.url + "\n"); fh.flush()
+                page.on("request", on_request)
+
+                # ¡ojo!: NO bloqueamos imágenes/CSS para no interferir con el "load"
+                # ir a la PDP evitando 'networkidle'
+                try:
+                    page.goto(pdp_url, wait_until="domcontentloaded")
+                except Exception:
+                    page.goto(pdp_url, wait_until="load")
+
+                # scrolls para disparar módulos (incluida la sección de reviews)
+                for _ in range(6):
+                    page.evaluate("window.scrollBy(0, document.body.scrollHeight/6)")
+                    page.wait_for_timeout(1200)
+
+                # intenta abrir pestaña/accordion de reviews si existe
+                for sel in ["text=Reviews", "text=Ratings & Reviews", "text=Customer Reviews",
+                            "text=Opiniones", "text=Valoraciones", "text=Reseñas"]:
+                    try:
+                        page.locator(sel).first.click(timeout=1500)
+                        page.wait_for_timeout(2000)
+                        break
+                    except Exception:
+                        pass
+
+                # scroll final
+                page.evaluate("window.scrollTo(0, document.body.scrollHeight)")
+                page.wait_for_timeout(2000)
+
+                # evidencia
+                page.screenshot(path=SCREENSHOT, full_page=True)
+                browser.close()
+
+                if seen:
+                    print(f"\n✔ Éxito con {engine}. URLs guardadas en {OUT_TXT}. Screenshot en {SCREENSHOT}.")
+                    return True
+                else:
+                    print(f"\n⚠ {engine} funcionó pero no vio XHR de reviews. Reviso siguiente motor…")
+        except Exception as e:
+            print(f"✖ {engine} falló: {e}. Probando el siguiente…")
+    return False
+
+if __name__ == "__main__":
+    ok = sniff_xhr(PDP)
+    if not ok:
+        print("\nNo se capturaron XHR de reviews con ninguno de los motores. "
+              "Revisa conectividad o intenta el método manual vía DevTools.")
+

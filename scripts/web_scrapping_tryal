@@ -1,0 +1,71 @@
+import time, re, math
+from urllib.parse import urljoin
+import requests
+from bs4 import BeautifulSoup
+import pandas as pd
+
+BASE = "https://www.sephora.my"
+LISTING = "https://www.sephora.my/categories/makeup?view=120"
+HEADERS = {
+    "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 "
+                  "(KHTML, like Gecko) Chrome/124 Safari/537.36",
+    "Accept-Language": "en-US,en;q=0.9"
+}
+
+def parse_rating(style):
+    # style e.g. "width: 80%;" -> 4.0/5
+    m = re.search(r'(\d+)', style or "")
+    if not m: return None
+    pct = int(m.group(1))
+    return round((pct/100)*5, 2)
+
+def clean_price(txt):
+    if not txt: return None, None
+    t = re.sub(r'\s+', ' ', txt).strip()
+    # capture currency symbol/ISO and first number
+    m = re.search(r'([A-Z]{3}|RM|S\$|€|\$)?\s*([\d,.]+)', t)
+    if not m: return None, None
+    cur = (m.group(1) or "").strip() or None
+    # normalize number with comma/point
+    val = m.group(2).replace(',', '')
+    try:
+        return cur, float(val)
+    except:
+        return cur, None
+
+def extract_page(url):
+    r = requests.get(url, headers=HEADERS, timeout=20)
+    r.raise_for_status()
+    soup = BeautifulSoup(r.text, "html.parser")
+    cards = soup.select("div.product-card, li.product-card, div.ProductCard")
+    if not cards:
+        print("⚠️ No se detectan cards: probablemente contenido JS. Considera Playwright/Selenium o capturar XHR JSON.")
+    rows = []
+    for c in cards:
+        name = (c.select_one(".product-name, .ProductCard__name") or {}).get_text(strip=True) if c.select_one(".product-name, .ProductCard__name") else None
+        brand = (c.select_one(".brand, .ProductCard__brand") or {}).get_text(strip=True) if c.select_one(".brand, .ProductCard__brand") else None
+        price_txt = (c.select_one(".prices, .ProductCard__price") or {}).get_text(" ", strip=True) if c.select_one(".prices, .ProductCard__price") else None
+        cur, price = clean_price(price_txt)
+        prod_link_el = c.select_one("a.product-card-image-link, a.ProductCard__link, a")
+        prod_url = urljoin(BASE, prod_link_el["href"]) if prod_link_el and prod_link_el.has_attr("href") else None
+        img_el = c.select_one("img")
+        img_url = urljoin(BASE, img_el["src"]) if img_el and img_el.has_attr("src") else (urljoin(BASE, img_el["data-src"]) if img_el and img_el.has_attr("data-src") else None)
+        label = (c.select_one(".labels, .ProductCard__badges") or {}).get_text(" ", strip=True) if c.select_one(".labels, .ProductCard__badges") else None
+        stars_style = (c.select_one(".stars, .Rating__fill") or {}).get("style") if c.select_one(".stars, .Rating__fill") else None
+        rating = parse_rating(stars_style)
+        reviews = None
+        rc_el = c.select_one(".reviews-count, .Rating__count")
+        if rc_el:
+            m = re.search(r'\d+', rc_el.get_text())
+            reviews = int(m.group()) if m else None
+        rows.append({
+            "name": name, "brand": brand,
+            "currency": cur, "price": price,
+            "product_url": prod_url, "image_url": img_url,
+            "label": label, "rating": rating, "reviews": reviews
+        })
+    return rows
+
+all_rows = extract_page(LISTING)
+df = pd.DataFrame(all_rows)
+print(df.head(20))

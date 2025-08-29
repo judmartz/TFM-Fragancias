@@ -40,5 +40,11 @@ os.makedirs(output_path, exist_ok=True)  # crea si no existe
 df_resultado.write.format("delta").mode("overwrite").save(output_path)
 
 print(f"✅ Dataset guardado en: {output_path}")
+# 💾 Guardar también como CSV para DVC
+os.makedirs("output", exist_ok=True)
+df_resultado.write \
+    .option("header", "true") \
+    .mode("overwrite") \
+    .csv("output/skincare_csv_spark")
 
 spark.stop()
